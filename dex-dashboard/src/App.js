@@ -1,9 +1,9 @@
 import React from 'react'
-import { ApolloProvider } from '@apollo/client'
-import Dashboard from './Dashboard'
-import getClient from './GraphQLClient' // Import dynamic client function
+import { ApolloProvider } from '@apollo/client' // Import Apollo Provider
+import getClient from './GraphQLClient' // Import your Apollo Client setup
+import Dashboard from './Dashboard' // Import the Dashboard component
 
-// Initially, use the Bancor client (you can switch dynamically in the dashboard)
+// Initialize Apollo Client with Bancor as the default subgraph
 const client = getClient('4Q4eEMDBjYM8JGsvnWCafFB5wCu6XntmsgxsxwYSnMib')
 
 function App() {
@@ -11,7 +11,7 @@ function App() {
     <ApolloProvider client={client}>
       <div className="App">
         <h1>Messari DEX Info Dashboard</h1>
-        <Dashboard />
+        <Dashboard /> {/* Render the Dashboard component */}
       </div>
     </ApolloProvider>
   )
