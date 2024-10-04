@@ -96,6 +96,7 @@ const App = () => {
       <table className="fancy-table">
         <thead>
           <tr>
+            <th>Rank</th> {/* New Rank Column */}
             <th>Indexer Name</th>
             <th>Total Stake (GRT)</th>
             <th>Query Fees Collected (GRT)</th>
@@ -116,7 +117,7 @@ const App = () => {
                 parseInt(indexer.queryFeesCollected) > 0
               )
             })
-            .map((indexer) => {
+            .map((indexer, index) => {
               // Calculate total stake (GRT)
               const totalStake =
                 (parseInt(indexer.stakedTokens) +
@@ -139,8 +140,9 @@ const App = () => {
             })
             // Sort by Query Fee Power Ranking in descending order
             .sort((a, b) => b.queryFeePowerRanking - a.queryFeePowerRanking)
-            .map((indexer) => (
+            .map((indexer, rank) => (
               <tr key={indexer.id}>
+                <td>{rank + 1}</td> {/* Display Rank Number */}
                 <td>{indexer.ensName}</td>
                 <td>
                   {indexer.totalStake.toLocaleString(undefined, {
@@ -159,12 +161,6 @@ const App = () => {
             ))}
         </tbody>
       </table>
-
-      {/* Explanation of how rankings are calculated */}
-      <p className="explanation">
-        Query Fee Power Ranking is calculated as: <br />
-        <strong>Query Fees Collected / Total Stake (GRT)</strong>
-      </p>
     </div>
   )
 }
