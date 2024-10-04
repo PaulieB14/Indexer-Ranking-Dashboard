@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { gql, useQuery } from '@apollo/client'
 import getClient from './GraphQLClient'
-import { Line } from 'react-chartjs-2'
 
 const SUBGRAPH_IDS = {
   Bancor: '4Q4eEMDBjYM8JGsvnWCafFB5wCu6XntmsgxsxwYSnMib',
@@ -19,63 +18,80 @@ const DEX_DATA_QUERY = gql`
       network
       totalValueLockedUSD
       cumulativeVolumeUSD
-      dailyUsageMetrics(first: 30) {
+      dailyUsageMetrics(first: 1) {
         dailySwapCount
-        timestamp
       }
-      financialMetrics(first: 30) {
+      financialMetrics(first: 1) {
         dailyTotalRevenueUSD
-        timestamp
       }
       cumulativeUniqueUsers
     }
   }
 `
 
+// Helper function to format numbers with commas and two decimal places
+const formatNumber = (value) => {
+  if (!value) return 'N/A' // Handle empty or undefined values
+  const number = parseFloat(value) // Ensure value is a number
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(number)
+}
+
+// Metric Card Component
+const MetricCard = ({ title, value }) => {
+  return (
+    <div
+      style={{
+        backgroundColor: '#f0f0f0',
+        padding: '20px',
+        borderRadius: '8px',
+        flex: '1 1 calc(25% - 20px)',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+        textAlign: 'center',
+      }}
+    >
+      <h3 style={{ fontSize: '18px', fontWeight: 'bold' }}>{title}</h3>
+      <p style={{ fontSize: '24px', margin: '10px 0', color: '#333' }}>
+        {formatNumber(value)}
+      </p>
+    </div>
+  )
+}
+
 const Dashboard = () => {
   const [dex, setDex] = useState('Bancor') // Default DEX selection
-
-  // Use useMemo to memoize the Apollo Client based on the selected dex
   const client = useMemo(() => getClient(SUBGRAPH_IDS[dex]), [dex])
 
   const { loading, error, data } = useQuery(DEX_DATA_QUERY, { client })
-  const [chartData, setChartData] = useState(null)
+  const [metrics, setMetrics] = useState({})
 
-  // Only runs when 'data' changes, preventing re-renders
   useEffect(() => {
     if (data) {
-      const swapCounts = data.dexAmmProtocols[0].dailyUsageMetrics.map(
-        (item) => item.dailySwapCount,
-      )
-      const timestamps = data.dexAmmProtocols[0].dailyUsageMetrics.map((item) =>
-        new Date(item.timestamp * 1000).toLocaleDateString(),
-      )
-
-      setChartData({
-        labels: timestamps,
-        datasets: [
-          {
-            label: 'Daily Swap Count',
-            data: swapCounts,
-            borderColor: 'rgba(75,192,192,1)',
-            fill: false,
-          },
-        ],
+      const dexMetrics = data.dexAmmProtocols[0]
+      setMetrics({
+        tvl: dexMetrics.totalValueLockedUSD,
+        volume: dexMetrics.cumulativeVolumeUSD,
+        dailySwapCount: dexMetrics.dailyUsageMetrics[0].dailySwapCount,
+        revenue: dexMetrics.financialMetrics[0].dailyTotalRevenueUSD,
+        users: dexMetrics.cumulativeUniqueUsers,
       })
     }
-  }, [data]) // Effect runs only when 'data' changes
+  }, [data])
 
   if (loading) return <p>Loading...</p>
   if (error) return <p>Error fetching data</p>
 
   return (
-    <div>
+    <div style={{ padding: '20px' }}>
       <h2>{dex} DEX Dashboard</h2>
 
       {/* Dropdown to select DEX */}
       <select
-        onChange={(e) => setDex(e.target.value)} // Set DEX when the user changes dropdown
+        onChange={(e) => setDex(e.target.value)}
         value={dex}
+        style={{ marginBottom: '20px', padding: '10px', fontSize: '16px' }}
       >
         {Object.keys(SUBGRAPH_IDS).map((dexName) => (
           <option key={dexName} value={dexName}>
@@ -84,8 +100,14 @@ const Dashboard = () => {
         ))}
       </select>
 
-      {/* Display chart */}
-      {chartData && <Line data={chartData} />}
+      {/* Metrics Display */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+        <MetricCard title="Total Value Locked (TVL)" value={metrics.tvl} />
+        <MetricCard title="24-Hour Trading Volume" value={metrics.volume} />
+        <MetricCard title="Number of Trades" value={metrics.dailySwapCount} />
+        <MetricCard title="Number of Users" value={metrics.users} />
+        <MetricCard title="Fees Generated" value={metrics.revenue} />
+      </div>
     </div>
   )
 }
