@@ -1,0 +1,98 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.dashboard {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+h1 {
+  font-size: 3em;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 1.8em;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.graphtronauts {
+  font-size: 1.2em;
+  color: #888;
+  font-style: italic;
+  margin-top: 10px;
+}
+
+.fancy-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.fancy-table thead th {
+  background-color: #f8f8f8;
+  color: #333;
+  padding: 10px;
+  text-align: left;
+  border-bottom: 2px solid #ddd;
+}
+
+.fancy-table tbody td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.fancy-table tbody tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.fancy-table tbody tr:hover {
+  background-color: #eaeaea;
+  transition: background-color 0.2s ease;
+}
+
+.fancy-table td {
+  text-align: center;
+}
+
+.explanation {
+  margin-top: 20px;
+  font-size: 1.1em;
+  color: #555;
+}
+
+/* Background image styling with external URL */
+.dashboard:before {
+  content: '';
+  background-image: url('https://images.ctfassets.net/c5bd0wqjc7v0/4Fyd1o8X3ZbJWwOykjeXep/7c0731713b4b4d3fa684d3914d9c36ac/graph-protocol.png?fl=progressive&q=100&w=1180');
+  background-size: 90%;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
