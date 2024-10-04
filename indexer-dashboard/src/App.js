@@ -35,11 +35,10 @@ const ENS_QUERY = gql`
   }
 `
 
-// Set up Apollo Client for ENS subgraph
+// Set up Apollo Client for ENS subgraph using environment variable for the API key
 const ensClient = new ApolloClient({
   link: new HttpLink({
-    uri:
-      'https://gateway.thegraph.com/api/b4fe37a0021860d90883a4b60ae90351/subgraphs/id/5XqPmWe6gjyrJtFn9cLy237i4cWw2j9HcUJEXsP5qGtH',
+    uri: `https://gateway.thegraph.com/api/${process.env.NEXT_PUBLIC_GRAPH_API_KEY}/subgraphs/id/5XqPmWe6gjyrJtFn9cLy237i4cWw2j9HcUJEXsP5qGtH`,
   }),
   cache: new InMemoryCache(),
 })
@@ -72,7 +71,7 @@ const App = () => {
 
       const ensResults = await Promise.all(ensPromises)
       const ensNameMap = ensResults.reduce((acc, { id, name }) => {
-        acc[id] = name || id // Use ENS name if available, otherwise fall back to wallet address
+        acc[id] = name || id // Use ENS name if available, otherwise fallback to wallet address
         return acc
       }, {})
 
@@ -85,7 +84,10 @@ const App = () => {
   }, [data])
 
   if (loading) return <p>Loading...</p>
-  if (error) return <p>Error: {error.message}</p>
+  if (error) {
+    console.error('GraphQL Query Error:', error)
+    return <p>Error: {error.message}</p>
+  }
 
   return (
     <div className="dashboard">
@@ -117,8 +119,14 @@ const App = () => {
                 parseInt(indexer.queryFeesCollected) > 0
               )
             })
-            .map((indexer, index) => {
-              // Calculate total stake (GRT)
+            .sort((a, b) => {
+              const aTotalStake = (parseInt(a.stakedTokens) + parseInt(a.delegatedTokens)) / 1e18
+              const bTotalStake = (parseInt(b.stakedTokens) + parseInt(b.delegatedTokens)) / 1e18
+              const aQueryFeePowerRanking = parseInt(a.queryFeesCollected) / aTotalStake
+              const bQueryFeePowerRanking = parseInt(b.queryFeesCollected) / bTotalStake
+              return bQueryFeePowerRanking - aQueryFeePowerRanking
+            })
+            .map((indexer, rank) => {
               const totalStake =
                 (parseInt(indexer.stakedTokens) +
                   parseInt(indexer.delegatedTokens)) /
@@ -129,36 +137,28 @@ const App = () => {
               // Query Fee Power Ranking (Query Fees / Total Stake)
               const queryFeePowerRanking =
                 totalStake > 0 ? queryFeesCollected / totalStake : 'N/A'
+              const ensName = ensNames[indexer.id] || indexer.id
 
-              return {
-                id: indexer.id,
-                totalStake,
-                queryFeesCollected,
-                queryFeePowerRanking,
-                ensName: ensNames[indexer.id] || indexer.id, // Display ENS or fallback to address
-              }
-            })
-            // Sort by Query Fee Power Ranking in descending order
-            .sort((a, b) => b.queryFeePowerRanking - a.queryFeePowerRanking)
-            .map((indexer, rank) => (
-              <tr key={indexer.id}>
-                <td>{rank + 1}</td> {/* Display Rank Number */}
-                <td>{indexer.ensName}</td>
-                <td>
-                  {indexer.totalStake.toLocaleString(undefined, {
-                    minimumFractionDigits: 4,
-                    maximumFractionDigits: 4,
-                  })}
-                </td>
-                <td>
-                  {indexer.queryFeesCollected.toLocaleString(undefined, {
-                    minimumFractionDigits: 4,
-                    maximumFractionDigits: 4,
-                  })}
-                </td>
-                <td>{indexer.queryFeePowerRanking.toFixed(4)}</td>
-              </tr>
-            ))}
+              return (
+                <tr key={indexer.id}>
+                  <td>{rank + 1}</td> {/* Display Rank Number */}
+                  <td>{ensName}</td>
+                  <td>
+                    {totalStake.toLocaleString(undefined, {
+                      minimumFractionDigits: 4,
+                      maximumFractionDigits: 4,
+                    })}
+                  </td>
+                  <td>
+                    {queryFeesCollected.toLocaleString(undefined, {
+                      minimumFractionDigits: 4,
+                      maximumFractionDigits: 4,
+                    })}
+                  </td>
+                  <td>{typeof queryFeePowerRanking === 'number' ? queryFeePowerRanking.toFixed(4) : 'N/A'}</td>
+                </tr>
+              )
+            })}
         </tbody>
       </table>
     </div>
